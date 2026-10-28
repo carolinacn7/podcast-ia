@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Buscador de podcasts de IA</title>
+<style>
+:root{--bg:#faf8f5;--card:#fff;--tx:#1f1d1a;--mut:#6b665f;--bd:#e4dfd7;--ac:#c4552d;--acbg:#fbe9e2;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#171513;--card:#211e1b;--tx:#f2eee8;--mut:#a39d94;--bd:#38332e;--ac:#ef8a62;--acbg:#3a241b;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#171513;--card:#211e1b;--tx:#f2eee8;--mut:#a39d94;--bd:#38332e;--ac:#ef8a62;--acbg:#3a241b;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:860px;margin:0 auto;padding:28px 18px 60px}
+h1{font-size:1.9rem;margin:0 0 4px;letter-spacing:-.02em}
+.sub{color:var(--mut);margin:0 0 20px}
+input[type=search]{width:100%;padding:13px 16px;font-size:1rem;border:1.5px solid var(--bd);border-radius:12px;background:var(--card);color:var(--tx)}
+input[type=search]:focus{outline:2px solid var(--ac);border-color:transparent}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 6px}
+.chip{border:1px solid var(--bd);background:var(--card);color:var(--tx);padding:6px 13px;border-radius:99px;font-size:.88rem;cursor:pointer}
+.chip[aria-pressed=true]{background:var(--ac);border-color:var(--ac);color:#fff}
+.count{color:var(--mut);font-size:.9rem;margin:14px 0 10px}
+.grid{display:grid;gap:12px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:16px 18px}
+.card h2{font-size:1.1rem;margin:0}
+.by{color:var(--mut);font-size:.88rem;margin:2px 0 8px}
+.card p{margin:0 0 10px}
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.tag{background:var(--acbg);color:var(--ac);font-size:.76rem;padding:2px 9px;border-radius:99px}
+.links a{color:var(--ac);font-size:.88rem;margin-right:14px;text-decoration:none;font-weight:600}
+.links a:hover{text-decoration:underline}
+.empty{text-align:center;padding:36px 10px;color:var(--mut)}
+.empty a{color:var(--ac);font-weight:600;margin:0 8px}
+.note{margin-top:28px;color:var(--mut);font-size:.82rem}
+</style>
+</head>
+<body>
+<main>
+  <h1>🎙️ Podcasts de IA</h1>
+  <p class="sub">Busca por nombre, tema o presentador.</p>
+  <input id="q" type="search" placeholder="Ej: agentes, investigación, noticias, español…" autocomplete="off" aria-label="Buscar podcasts">
+  <div class="chips" id="langs"></div>
+  <div class="chips" id="topics"></div>
+  <div class="count" id="count"></div>
+  <div class="grid" id="list"></div>
+  <p class="note">Catálogo inicial de ejemplo. Si no encuentras algo, usa los botones de búsqueda en Apple Podcasts o Spotify que aparecen con tu consulta.</p>
+</main>
+<script>
+const DATA=[
+{n:"Latent Space",a:"swyx y Alessio Fanelli",l:"EN",t:["ingeniería","agentes","modelos"],d:"Ingeniería de IA: modelos, agentes, herramientas y entrevistas con quienes los construyen."},
+{n:"Dwarkesh Podcast",a:"Dwarkesh Patel",l:"EN",t:["entrevistas","investigación","futuro"],d:"Conversaciones largas y profundas con investigadores, fundadores y pensadores sobre IA y su impacto."},
+{n:"Lex Fridman Podcast",a:"Lex Fridman",l:"EN",t:["entrevistas","investigación","futuro"],d:"Entrevistas extensas con figuras de la IA, la ciencia y la tecnología."},
+{n:"No Priors",a:"Sarah Guo y Elad Gil",l:"EN",t:["negocio","startups","entrevistas"],d:"IA desde la mirada de inversores y fundadores: startups, producto y tendencias."},
+{n:"Practical AI",a:"Changelog",l:"EN",t:["ingeniería","práctico","machine learning"],d:"Machine learning y IA aplicados, explicados para profesionales y curiosos."},
+{n:"The TWIML AI Podcast",a:"Sam Charrington",l:"EN",t:["investigación","machine learning","entrevistas"],d:"Entrevistas con investigadores y profesionales del aprendizaje automático."},
+{n:"Machine Learning Street Talk",a:"MLST",l:"EN",t:["investigación","filosofía","modelos"],d:"Debates técnicos y filosóficos con investigadores de primer nivel."},
+{n:"The Cognitive Revolution",a:"Nathan Labenz",l:"EN",t:["agentes","modelos","negocio"],d:"Cómo la IA cambia la tecnología, el trabajo y la sociedad, con invitados del sector."},
+{n:"Last Week in AI",a:"Andrey Kurenkov y Jeremie Harris",l:"EN",t:["noticias","resumen semanal"],d:"Resumen semanal de las noticias más importantes de IA."},
+{n:"Hard Fork",a:"The New York Times",l:"EN",t:["noticias","sociedad","tecnología"],d:"Actualidad tecnológica en tono accesible, con mucha presencia de la IA."},
+{n:"The AI Podcast",a:"NVIDIA",l:"EN",t:["industria","hardware","aplicaciones"],d:"Historias de cómo se aplica la IA en ciencia, industria y creatividad."},
+{n:"Eye on A.I.",a:"Craig S. Smith",l:"EN",t:["entrevistas","investigación","noticias"],d:"Conversaciones con investigadores y emprendedores sobre el avance de la IA."},
+{n:"Gradient Dissent",a:"Weights & Biases",l:"EN",t:["machine learning","ingeniería","entrevistas"],d:"Cómo se construyen y llevan a producción sistemas de machine learning."},
+{n:"Monos estocásticos",a:"Antonio Ortiz y Matías S. Zavia",l:"ES",t:["noticias","sociedad","análisis"],d:"Análisis en español sobre IA, tecnología y su impacto en la sociedad."}
+];
+const $=id=>document.getElementById(id);
+const norm=s=>s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");
+let lang="Todos",topic="";
+const topics=[...new Set(DATA.flatMap(x=>x.t))].sort();
+function chips(el,items,cur,fn){el.innerHTML="";items.forEach(v=>{const b=document.createElement("button");b.className="chip";b.textContent=v;b.setAttribute("aria-pressed",String(v===cur));b.onclick=()=>fn(v);el.appendChild(b)})}
+function esc(s){return s.replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
+function render(){
+  const q=norm($("q").value.trim());
+  chips($("langs"),["Todos","ES","EN"],lang,v=>{lang=v;render()});
+  chips($("topics"),topics,topic,v=>{topic=topic===v?"":v;render()});
+  const r=DATA.filter(x=>(lang==="Todos"||x.l===lang)&&(!topic||x.t.includes(topic))&&(!q||norm([x.n,x.a,x.d,...x.t].join(" ")).includes(q)));
+  $("count").textContent=r.length+(r.length===1?" resultado":" resultados");
+  const term=encodeURIComponent($("q").value.trim()||"inteligencia artificial");
+  $("list").innerHTML=r.length?r.map(x=>{const s=encodeURIComponent(x.n+" podcast");return `<article class="card"><h2>${esc(x.n)}</h2><div class="by">${esc(x.a)} · ${x.l}</div><p>${esc(x.d)}</p><div class="tags">${x.t.map(t=>`<span class="tag">${esc(t)}</span>`).join("")}</div><div class="links"><a target="_blank" rel="noopener" href="https://podcasts.apple.com/search?term=${s}">Apple Podcasts</a><a target="_blank" rel="noopener" href="https://open.spotify.com/search/${s}/podcasts">Spotify</a></div></article>`}).join(""):`<div class="empty">No hay coincidencias en el catálogo.<br><br>Búscalo directamente:<br><a target="_blank" rel="noopener" href="https://podcasts.apple.com/search?term=${term}%20podcast">Apple Podcasts</a><a target="_blank" rel="noopener" href="https://open.spotify.com/search/${term}/podcasts">Spotify</a></div>`;
+}
+$("q").addEventListener("input",render);
+render();
+</script>
+</body>
+</html>
